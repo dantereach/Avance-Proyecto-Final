@@ -86,12 +86,16 @@ class TestMessageProtocol:
         """Test de serialización y deserialización."""
         original = create_request(CommandType.PING)
         
-        # Serializar
+        # Serializar (agrega prefijo de longitud de 4 bytes)
         data = serialize_message(original)
         assert isinstance(data, bytes)
+        assert len(data) > 4  # Al menos 4 bytes de prefijo + JSON
         
-        # Deserializar
-        deserialized = deserialize_message(data)
+        # Extraer longitud
+        length = int.from_bytes(data[:4], byteorder='big')
+        
+        # Deserializar (sin el prefijo)
+        deserialized = deserialize_message(data[4:])
         
         assert deserialized['type'] == original['type']
         assert deserialized['command'] == original['command']
