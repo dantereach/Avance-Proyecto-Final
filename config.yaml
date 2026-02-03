@@ -1,0 +1,47 @@
+# Sistema Distribuido de Administración de Procesos - Configuración
+
+# Configuración del servidor TCP
+server:
+  host: "0.0.0.0"
+  port: 9000
+  buffer_size: 4096
+  timeout: 30
+  max_connections: 10
+
+# Configuración del cliente
+client:
+  timeout: 30
+  reconnect_attempts: 3
+  reconnect_delay: 5
+
+# Configuración del registro de servicios
+registry:
+  host: "0.0.0.0"
+  port: 9001
+  heartbeat_interval: 5  # segundos
+  timeout: 15  # segundos para marcar servidor como caído
+  cleanup_interval: 10  # segundos
+
+# Configuración de descubrimiento UDP
+discovery:
+  broadcast_port: 9002
+  multicast_group: "224.0.0.1"
+  announcement_interval: 5  # segundos
+  discovery_timeout: 10  # segundos
+
+# Configuración de balanceo de carga
+load_balancer:
+  strategy: "round_robin"  # round_robin, least_loaded
+  health_check_interval: 30  # segundos
+
+# Configuración de logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "system.log"
+  console: true
+
+# Configuración de procesos
+processes:
+  monitor_interval: 1  # segundos
+  kill_timeout: 5  # segundos antes de force kill
