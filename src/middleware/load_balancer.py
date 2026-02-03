@@ -97,19 +97,41 @@ class LoadBalancer:
             current_ids = {s['server_id'] for s in self.servers}
             new_ids = set(servers_dict.keys())
             
-            # Eliminar servidores que ya no existen
+            # Eliminar servidores que ya no existen (sin llamar remove_server para evitar deadlock)
             for sid in current_ids - new_ids:
-                self.remove_server(sid)
+                self.servers = [s for s in self.servers if s['server_id'] != sid]
+                if sid in self.server_stats:
+                    del self.server_stats[sid]
+                logger.info(f"Servidor eliminado: {sid}")
             
-            # Agregar o actualizar servidores
+            # Agregar o actualizar servidores (sin llamar add_server para evitar deadlock)
             for server_id, info in servers_dict.items():
                 if info.get('active', False):
-                    self.add_server(
-                        server_id,
-                        info['host'],
-                        info['port'],
-                        info.get('metadata')
-                    )
+                    server_info = {
+                        'server_id': server_id,
+                        'host': info['host'],
+                        'port': info['port'],
+                        'metadata': info.get('metadata', {}),
+                        'active': True
+                    }
+                    
+                    # Evitar duplicados
+                    found = False
+                    for i, srv in enumerate(self.servers):
+                        if srv['server_id'] == server_id:
+                            self.servers[i] = server_info
+                            found = True
+                            logger.info(f"Servidor actualizado: {server_id}")
+                            break
+                    
+                    if not found:
+                        self.servers.append(server_info)
+                        self.server_stats[server_id] = {'requests': 0, 'errors': 0}
+                        logger.info(f"Servidor agregado: {server_id}")
+            
+            # Reiniciar round-robin
+            if self.strategy == "round_robin" and self.servers:
+                self.round_robin_cycle = cycle(self.servers)
 
     def get_next_server(self) -> Optional[Dict[str, Any]]:
         """

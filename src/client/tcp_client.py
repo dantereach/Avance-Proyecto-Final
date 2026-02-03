@@ -92,8 +92,15 @@ class TCPClient:
             self.socket.sendall(data)
             logger.debug(f"Comando enviado: {command}")
             
-            # Recibir respuesta
-            response_data = self.socket.recv(4096)
+            # Recibir longitud del mensaje (4 bytes)
+            length_data = self._recv_exactly(4)
+            if not length_data:
+                raise ConnectionError("Servidor cerró la conexión")
+            
+            message_length = int.from_bytes(length_data, byteorder='big')
+            
+            # Recibir mensaje completo
+            response_data = self._recv_exactly(message_length)
             
             if not response_data:
                 raise ConnectionError("Servidor cerró la conexión")
@@ -108,6 +115,24 @@ class TCPClient:
             logger.error(f"Error en comunicación: {e}")
             self.connected = False
             raise
+
+    def _recv_exactly(self, n: int) -> bytes:
+        """
+        Recibe exactamente n bytes del socket.
+
+        Args:
+            n: Número de bytes a recibir
+
+        Returns:
+            bytes recibidos
+        """
+        data = b""
+        while len(data) < n:
+            chunk = self.socket.recv(n - len(data))
+            if not chunk:
+                return data
+            data += chunk
+        return data
 
     def list_processes(self) -> Dict[str, Any]:
         """

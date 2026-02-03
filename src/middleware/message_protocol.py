@@ -137,30 +137,34 @@ def create_announcement(
 
 def serialize_message(message: Dict[str, Any]) -> bytes:
     """
-    Serializa un mensaje a bytes JSON.
+    Serializa un mensaje a bytes JSON con prefijo de longitud.
 
     Args:
         message: Mensaje a serializar
 
     Returns:
-        bytes: Mensaje serializado
+        bytes: Mensaje serializado con prefijo de 4 bytes de longitud
 
     Raises:
         ValueError: Si el mensaje no se puede serializar
     """
     try:
         json_str = json.dumps(message)
-        return json_str.encode('utf-8')
+        json_bytes = json_str.encode('utf-8')
+        # Agregar prefijo de longitud (4 bytes, big-endian)
+        length = len(json_bytes)
+        length_prefix = length.to_bytes(4, byteorder='big')
+        return length_prefix + json_bytes
     except (TypeError, ValueError) as e:
         raise ValueError(f"Error al serializar mensaje: {e}")
 
 
 def deserialize_message(data: bytes) -> Dict[str, Any]:
     """
-    Deserializa un mensaje desde bytes JSON.
+    Deserializa un mensaje desde bytes JSON (sin prefijo de longitud).
 
     Args:
-        data: Datos a deserializar
+        data: Datos a deserializar (solo el JSON, sin prefijo)
 
     Returns:
         Dict: Mensaje deserializado

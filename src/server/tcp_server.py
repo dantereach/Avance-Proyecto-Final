@@ -100,8 +100,17 @@ class TCPServer:
         """
         try:
             while self.running:
-                # Recibir datos
-                data = client_socket.recv(self.buffer_size)
+                # Recibir longitud del mensaje (4 bytes)
+                length_data = self._recv_exactly(client_socket, 4)
+                
+                if not length_data or len(length_data) < 4:
+                    logger.info(f"Cliente {client_address} desconectado")
+                    break
+                
+                message_length = int.from_bytes(length_data, byteorder='big')
+                
+                # Recibir mensaje completo
+                data = self._recv_exactly(client_socket, message_length)
                 
                 if not data:
                     logger.info(f"Cliente {client_address} desconectado")
@@ -149,6 +158,25 @@ class TCPServer:
                 logger.info(f"Conexión con {client_address} cerrada")
             except:
                 pass
+
+    def _recv_exactly(self, sock: socket.socket, n: int) -> bytes:
+        """
+        Recibe exactamente n bytes del socket.
+
+        Args:
+            sock: Socket del cual recibir
+            n: Número de bytes a recibir
+
+        Returns:
+            bytes recibidos
+        """
+        data = b""
+        while len(data) < n:
+            chunk = sock.recv(n - len(data))
+            if not chunk:
+                return data
+            data += chunk
+        return data
 
     def _process_command(self, message: dict) -> dict:
         """
