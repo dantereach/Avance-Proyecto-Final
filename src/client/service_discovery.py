@@ -54,6 +54,8 @@ class ServiceDiscovery:
             # Socket UDP para escuchar anuncios
             self.listen_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # Bind to all interfaces ('') is intentional for service discovery
+            # This allows receiving UDP broadcasts from any network interface
             self.listen_socket.bind(('', self.broadcast_port))
             self.listen_socket.settimeout(1.0)
             

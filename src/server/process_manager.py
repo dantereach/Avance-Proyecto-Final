@@ -5,6 +5,7 @@ Gestión y monitoreo de procesos del sistema usando psutil.
 import psutil
 import subprocess
 import time
+import platform
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
@@ -277,7 +278,7 @@ class ProcessManager:
             },
             'system': {
                 'boot_time': boot_time.isoformat(),
-                'platform': psutil.LINUX if hasattr(psutil, 'LINUX') else 'unknown'
+                'platform': platform.system()
             },
             'timestamp': datetime.now().isoformat()
         }
